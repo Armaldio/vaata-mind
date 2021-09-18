@@ -82,7 +82,6 @@
 import { nanoid } from 'nanoid';
 import Vue from 'vue';
 import { Note, Project, Task } from './models/project';
-import notion from './notion';
 import { State } from './store';
 
 export default Vue.extend({
@@ -95,12 +94,6 @@ export default Vue.extend({
   async mounted() {
     const project = this.$accessor.projects[0];
     this.$accessor.SET_CURRENT_PROJECT(project);
-
-    const dbs = await notion.search({
-      query: '',
-    });
-
-    console.log('dbs', dbs);
   },
 
   computed: {
