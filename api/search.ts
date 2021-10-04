@@ -1,12 +1,10 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import notion from './notion';
+import notion from '../src/api/notion';
 
 export default async (req: VercelRequest, res: VercelResponse) => {
-  const dbs = await notion.search({
-    query: '',
-  });
+  const dbs = await notion.search({});
 
   console.log('dbs', dbs);
 
-  res.json(dbs);
+  return res.json(dbs);
 };

@@ -35,7 +35,6 @@
 
     <v-navigation-drawer
       v-model="drawer"
-      absolute
       clipped
       width="500"
       app
@@ -94,6 +93,25 @@ export default Vue.extend({
   async mounted() {
     const project = this.$accessor.projects[0];
     this.$accessor.SET_CURRENT_PROJECT(project);
+
+    const json = await ((await fetch('/api/get', {
+      method: 'POST',
+      body: JSON.stringify({
+        type: 'projects',
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })).json());
+
+    console.log('json', json);
+
+    const json2 = await ((await fetch('/api/updateSchemas', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })).json());
   },
 
   computed: {
