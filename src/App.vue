@@ -71,7 +71,7 @@
     </v-navigation-drawer>
 
     <v-main>
-      <a href="https://api.notion.com/v1/oauth/authorize?client_id=63585c32-8820-43ae-bec7-edaafbed4f60&redirect_uri=http://localhost:8080&response_type=code">Add to Notion</a>
+      <!-- <a href="https://api.notion.com/v1/oauth/authorize?client_id=63585c32-8820-43ae-bec7-edaafbed4f60&redirect_uri=http://localhost:8080&response_type=code">Add to Notion</a> -->
       <router-view></router-view>
     </v-main>
   </v-app>
@@ -80,6 +80,7 @@
 <script lang="ts">
 import { nanoid } from 'nanoid';
 import Vue from 'vue';
+import { GetPageResponse } from '@notionhq/client/build/src/api-endpoints';
 import { Note, Project, Task } from './models/project';
 import { State } from './store';
 
@@ -94,7 +95,7 @@ export default Vue.extend({
     const project = this.$accessor.projects[0];
     this.$accessor.SET_CURRENT_PROJECT(project);
 
-    const json = await ((await fetch('/api/get', {
+    const projects = (await ((await fetch('/api/getPages', {
       method: 'POST',
       body: JSON.stringify({
         type: 'projects',
@@ -102,16 +103,87 @@ export default Vue.extend({
       headers: {
         'Content-Type': 'application/json',
       },
-    })).json());
+    })).json())).results as GetPageResponse[];
 
-    console.log('json', json);
-
-    const json2 = await ((await fetch('/api/updateSchemas', {
+    const tasks = (await ((await fetch('/api/getPages', {
       method: 'POST',
+      body: JSON.stringify({
+        type: 'tasks',
+      }),
       headers: {
         'Content-Type': 'application/json',
       },
-    })).json());
+    })).json())).results as GetPageResponse[];
+
+    const notes = (await ((await fetch('/api/getPages', {
+      method: 'POST',
+      body: JSON.stringify({
+        type: 'notes',
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })).json())).results as GetPageResponse[];
+
+    console.log('projects', projects);
+    console.log('notes', notes);
+    console.log('tasks', tasks);
+
+    const blocksTasks: (() => Promise<any>)[] = [];
+
+    tasks.forEach(async (task) => {
+      console.log('task', task);
+      blocksTasks.push(async () => {
+        const blocks = (await ((await fetch('/api/getPageDetails', {
+          method: 'POST',
+          body: JSON.stringify({
+            page: task.id,
+          }),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })).json()));
+
+        console.log('blocks', blocks);
+
+        return blocks;
+      });
+    });
+
+    const taskBlocsResult = await Promise.all(blocksTasks.map((x) => x()));
+    console.log('taskBlocsResult', taskBlocsResult);
+
+    this.$accessor.SET_PROJECTS(projects.map((p, index) => {
+      const myProject = new Project();
+      myProject.id = p.id;
+      myProject.name = p.properties.Name.title[0].text.content;
+      myProject.description = '';
+
+      return myProject;
+    }));
+
+    this.$accessor.SET_TASKS(tasks.map((p, index) => {
+      const myTask: Partial<Task> = {};
+      myTask.id = p.id;
+      myTask.name = p.properties.Name.title[0].text.content;
+      myTask.project = p.properties.Project.relation[0].id;
+      myTask.status = p.properties.Status.select?.id ?? null;
+      myTask.tags = p.properties.Tags.multi_select.map((tag) => tag.id);
+      console.log('blocksTasks[index]', taskBlocsResult[index].results);
+      myTask.content = taskBlocsResult[index].results;
+
+      return new Task(myTask);
+    }));
+
+    this.$accessor.SET_NOTES(notes.map((p) => {
+      const myNotes = new Note();
+      myNotes.id = p.id;
+      myNotes.content = '';
+      myNotes.name = p.properties.Name.title[0].text.content;
+      myNotes.project = p.properties.Project.relation[0].id;
+
+      return myNotes;
+    }));
   },
 
   computed: {
@@ -136,7 +208,6 @@ export default Vue.extend({
     },
     tasks(): State['tasks'] {
       const project = this.currentProject;
-      console.log('project', project);
       if (!project) {
         return [];
       }
@@ -144,15 +215,6 @@ export default Vue.extend({
       const tasks = this.$accessor.tasks.filter(
         (task) => task.project === project.id,
       );
-
-      tasks.push({
-        description: '',
-        status: '',
-        tags: [],
-        id: nanoid(),
-        name: 'aaa',
-        project: project.id,
-      });
 
       return tasks;
     },
@@ -166,14 +228,6 @@ export default Vue.extend({
         (note) => note.project === project.id,
       );
 
-      console.log('notes', notes);
-
-      notes.push({
-        content: 'bbb',
-        id: nanoid(),
-        name: 'aaa',
-        project: project.id,
-      });
       return notes;
     },
   },

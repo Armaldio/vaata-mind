@@ -15,7 +15,7 @@ export interface ProjectItem {
   project: string;
 }
 export interface Task extends ProjectItem {
-  description: string;
+  content: string;
   status: string;
   tags: ID[];
 }
@@ -27,7 +27,7 @@ export class Task implements Task {
 
   project: string;
 
-  description: string;
+  content: string;
 
   status: string;
 
@@ -37,7 +37,7 @@ export class Task implements Task {
     this.id = nanoid();
     this.name = task.name;
     this.project = task.project;
-    this.description = task.description;
+    this.content = task.content;
     this.status = task.status;
     this.tags = task.tags;
   }

@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import VueRouter, { RouteConfig } from 'vue-router';
-import Home from '../views/Home.vue';
+import Home from '../views/Viewer.vue';
 
 Vue.use(VueRouter);
 
@@ -9,6 +9,13 @@ const routes: Array<RouteConfig> = [
     path: '/',
     name: 'Home',
     component: Home,
+    children: [
+      {
+        path: ':project/:element',
+        name: 'Project',
+        component: () => import('../views/Viewer.vue'),
+      },
+    ],
   },
   // {
   //   path: '/palette',

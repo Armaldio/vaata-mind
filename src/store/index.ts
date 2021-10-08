@@ -23,7 +23,9 @@ const baseState = () => ({
 
 export type State = ReturnType<typeof baseState>;
 
-const getters = getterTree(baseState, {});
+const getters = getterTree(baseState, {
+  elements: (state) => ([...state.notes, ...state.tasks]),
+});
 
 const mutations = mutationTree(baseState, {
   SET_DRAWER(state, drawer: boolean) {
@@ -84,6 +86,7 @@ const actions = actionTree(
 const storePattern = {
   state: baseState,
   mutations,
+  getters,
   actions,
 };
 
