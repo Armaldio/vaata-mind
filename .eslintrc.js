@@ -20,6 +20,9 @@ module.exports = {
     'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
     'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
 
+    indent: 'off',
+    '@typescript-eslint/indent': ['error', 2],
+
     '@typescript-eslint/ban-ts-comment': 0,
   },
 };

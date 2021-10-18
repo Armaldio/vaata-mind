@@ -1,6 +1,7 @@
 import Vue from 'vue';
 import VueRouter, { RouteConfig } from 'vue-router';
-import Home from '../views/Viewer.vue';
+import Admin from '../views/Administration.vue';
+import Random from '../views/Random.vue';
 
 Vue.use(VueRouter);
 
@@ -8,14 +9,24 @@ const routes: Array<RouteConfig> = [
   {
     path: '/',
     name: 'Home',
-    component: Home,
+    redirect: '/admin',
+  },
+  {
+    path: '/admin',
+    name: 'Administration',
+    component: Admin,
     children: [
       {
-        path: ':project/:element',
+        path: ':project/:element?',
         name: 'Project',
-        component: () => import('../views/Viewer.vue'),
+        component: () => import('../views/Administration/Viewer.vue'),
       },
     ],
+  },
+  {
+    path: '/random',
+    name: 'Random',
+    component: Random,
   },
   // {
   //   path: '/palette',

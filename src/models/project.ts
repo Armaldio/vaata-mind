@@ -34,7 +34,7 @@ export class Task implements Task {
   tags: string[];
 
   constructor(task: Task) {
-    this.id = nanoid();
+    this.id = task.id;
     this.name = task.name;
     this.project = task.project;
     this.content = task.content;
