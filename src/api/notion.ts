@@ -1,18 +1,18 @@
 import { Client } from '@notionhq/client';
+import { VercelRequest } from '@vercel/node';
 
-const types = {
-  projects: process.env.NOTION_PROJECTS,
-  notes: process.env.NOTION_NOTES,
-  tasks: process.env.NOTION_TASKS,
+export const auth = {
+  clientId: process.env.CLIENT_ID,
+  clientSecret: process.env.CLIENT_SECRET,
 };
 
 // Initializing a client
-const notion = new Client({
-  auth: process.env.NOTION_TOKEN,
-});
+export const createNotion = (req: VercelRequest) => {
+  if (req.headers.token && !Array.isArray(req.headers.token)) {
+    return new Client({
+      auth: req.headers.token,
+    });
+  }
 
-export default notion;
-
-export function findTableId(type: keyof typeof types) {
-  return types[type];
-}
+  throw new Error('No token provided');
+};

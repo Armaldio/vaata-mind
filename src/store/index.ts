@@ -7,18 +7,18 @@ import {
   mutationTree,
   actionTree,
 } from 'typed-vuex';
-import { Note, Project, Task } from '@/models/project';
+import { Note, IProject, Task } from '@/models/project';
 import { dataDB } from '@/database';
 
 Vue.use(Vuex);
 
 const baseState = () => ({
   drawer: true,
-  currentProject: null as Project | null,
+  currentProject: null as IProject | null,
   currentItem: null as Note | Task | null,
   tasks: [] as Task[],
   notes: [] as Note[],
-  projects: [] as Project[],
+  projects: [] as IProject[],
 });
 
 export type State = ReturnType<typeof baseState>;
@@ -31,13 +31,13 @@ const mutations = mutationTree(baseState, {
   SET_DRAWER(state, drawer: boolean) {
     state.drawer = drawer;
   },
-  SET_CURRENT_PROJECT(state, project: Project | null) {
+  SET_CURRENT_PROJECT(state, project: IProject | null) {
     state.currentProject = project;
   },
   SET_CURRENT_ITEM(state, item: Task | Note) {
     state.currentItem = item;
   },
-  SET_PROJECTS(state, projects: Project[]) {
+  SET_PROJECTS(state, projects: IProject[]) {
     state.projects = projects;
   },
   SET_TASKS(state, tasks: Task[]) {
@@ -47,7 +47,7 @@ const mutations = mutationTree(baseState, {
     state.notes = notes;
   },
 
-  PUT_PROJECT(state, project: Project) {
+  PUT_PROJECT(state, project: IProject) {
     const foundIndex = state.projects.findIndex(
       (p) => p.id === project.id,
     );
@@ -63,7 +63,7 @@ const actions = actionTree(
   { state: baseState, getters, mutations },
   {
 
-    async createProject({ commit }, project: Project) {
+    async createProject({ commit }, project: IProject) {
       commit('PUT_PROJECT', project);
     },
 

@@ -9,7 +9,7 @@ const routes: Array<RouteConfig> = [
   {
     path: '/',
     name: 'Home',
-    redirect: '/admin',
+    component: Random,
   },
   {
     path: '/admin',
@@ -24,9 +24,14 @@ const routes: Array<RouteConfig> = [
     ],
   },
   {
-    path: '/random',
-    name: 'Random',
-    component: Random,
+    path: '/login',
+    name: 'Login',
+    component: () => import('../views/Login.vue'),
+  },
+  {
+    path: '/oauth/callback',
+    name: 'OAuthCallback',
+    component: () => import('../views/OAuthCallback.vue'),
   },
   // {
   //   path: '/palette',

@@ -1,43 +1,83 @@
 <template>
-  <v-container
-    class="py-8 px-6"
-    fluid
-  >
-    <v-row>
-      <v-col
-        cols="12"
-      >
-        <v-card>
-          <v-subheader>{{ name }}</v-subheader>
-          <v-card-text>
-            <VueNotionRender v-if="blockMap" :unofficial="false" :data="blockMap"></VueNotionRender>
-            <!-- <NotionRenderer v-if="blockMap" :blockMaps="blockMap" ></NotionRenderer> -->
-            <div v-else>
-              No data
-            </div>
-          </v-card-text>
+  <v-card>
+    <template v-if="!isLoading">
+      <v-card-title>
+        <span class="text-truncate">{{ task.name }}</span>
+        <v-spacer></v-spacer>
+        <v-btn :href="task.url" target="_blank" text icon class="hidden-sm-and-down">
+          <v-icon>mdi-open-in-new</v-icon>
+        </v-btn>
+      </v-card-title>
+      <v-card-text class="card-text">
+        <div>
+          <Property
+            v-for="(prop, key) in task.properties"
+            :key="key"
+            :name="key"
+            :property="prop"
+          >
+          </Property>
+        </div>
+        <VueNotionRender
+          v-if="task.content && task.content.length > 0"
+          :unofficial="false"
+          :data="task.content"
+        ></VueNotionRender>
+        <!-- <NotionRenderer v-if="blockMap" :blockMaps="blockMap" ></NotionRenderer> -->
+        <div v-else>
+          <i>No description</i>
+        </div>
+      </v-card-text>
+    </template>
+    <v-skeleton-loader
+      v-else
+      type="article"
+      class="skeleton-loader"
+    ></v-skeleton-loader>
 
-        </v-card>
-      </v-col>
-    </v-row>
-  </v-container>
+    <v-card-actions>
+      <v-spacer></v-spacer>
+      <template v-if="doingMode">
+        <v-btn @click="done">Terminer</v-btn>
+        <v-btn @click="cancel">Annuler</v-btn>
+      </template>
+
+      <template v-else>
+        <v-btn @click="reject" color="error">Rejecter</v-btn>
+        <v-btn @click="accept" color="success">Accepter</v-btn>
+      </template>
+    </v-card-actions>
+  </v-card>
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import Vue, { PropType } from 'vue';
 import VueNotionRender from 'vue-notion-render';
+import { Task } from '@/models/project';
+import Property from '@/views/Administration/Properties.vue';
 
 export default Vue.extend({
-  name: 'Element',
+  name: 'Viewer',
 
   components: {
     VueNotionRender,
+    Property,
   },
 
   props: {
     task: {
-      type: String,
+      type: Object as PropType<Task | null>,
       required: false,
+    },
+    isLoading: {
+      type: Boolean as PropType<boolean>,
+      required: false,
+      default: true,
+    },
+    doingMode: {
+      type: Boolean as PropType<boolean>,
+      required: false,
+      default: false,
     },
   },
 
@@ -48,32 +88,36 @@ export default Vue.extend({
     };
   },
 
-  beforeRouteUpdate(to: any, from: any, next: any) {
-    if (this.task) {
-      return;
-    }
+  methods: {
+    accept() {
+      this.$emit('accept');
+    },
+    reject() {
+      this.$emit('reject');
+    },
 
-    const { element } = this.$route.params;
-    const { elements } = this.$accessor;
-
-    this.blockMap = elements.find((el) => el.id === element)?.content ?? null;
-    next();
+    done() {
+      this.$emit('done');
+    },
+    cancel() {
+      this.$emit('cancel');
+    },
   },
 
   mounted() {
-    const { elements } = this.$accessor;
-
-    if (this.task) {
-      const found = elements.find((el) => el.id === this.task);
-      if (found) {
-        this.name = found.name;
-        this.blockMap = found.content ?? null;
-      }
-    } else {
-      const { element } = this.$route.params;
-
-      this.blockMap = elements.find((el) => el.id === element)?.content ?? null;
-    }
+    console.log('this.task', this.task);
   },
 });
 </script>
+
+<style lang="scss" scoped>
+.card-text {
+  height: calc(100% - 122px);
+  overflow: auto;
+}
+
+.skeleton-loader {
+  height: calc(100% - 54px);
+  overflow: auto;
+}
+</style>

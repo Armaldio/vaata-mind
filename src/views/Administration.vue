@@ -92,7 +92,6 @@
     </v-navigation-drawer>
 
     <v-main>
-      <!-- <a href="https://api.notion.com/v1/oauth/authorize?client_id=63585c32-8820-43ae-bec7-edaafbed4f60&redirect_uri=http://localhost:8080&response_type=code">Add to Notion</a> -->
       <router-view></router-view>
     </v-main>
   </v-app>

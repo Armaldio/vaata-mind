@@ -1,80 +1,137 @@
 <template>
   <v-app>
-    <v-main>
-       <v-autocomplete
-        dense
-        outlined
-        label="Select a project..."
-        v-model="currentProject"
-        :items="projects"
-        item-text="name"
-        item-value="id"
-        return-object
-        hide-details
-      >
-      </v-autocomplete>
+    <v-main class="main">
+      <v-container fill-height>
+      <!-- <v-treeview
+        selectable
+        item-text="text"
+        item-key="id"
+        :items="selector"
+      ></v-treeview> -->
 
-      <v-card v-if="task">
-        <v-card-text>
-          <Viewer task="5c1d4860-f7c7-4b69-850b-c143a67bfceb"></Viewer>
-          <v-chip>Algo</v-chip>
-        </v-card-text>
-        <v-card-actions>
-          <template v-if="doingMode">
-            <v-btn @click="done">Terminer</v-btn>
-            <v-btn @click="cancel">Annuler</v-btn>
-          </template>
+        <v-row
+          align="center"
+          class="h100"
+        >
+          <v-col class="h100 d-flex flex-column hide-overflow">
+            <v-autocomplete
+              dense
+              solo
+              label="Select a project..."
+              v-model="currentProject"
+              :items="selector"
+              item-text="name"
+              item-value="id"
+              multiple
+              :loading="isProjectsLoading"
+              return-object
+              hide-details
+              class="mb-4 flex-grow-0"
+            >
+            </v-autocomplete>
 
-          <template v-else>
-            <v-btn @click="reject">Rejecter</v-btn>
-            <v-btn @click="accept">Accepter</v-btn>
-          </template>
-        </v-card-actions>
-      </v-card>
+            <Viewer
+              class="flex-grow-1 h100 hide-overflow"
+              :task="currentTask"
+              :isLoading="isTaskLoading"
+              :doingMode="doingMode"
+
+              @accept="accept"
+              @reject="reject"
+              @done="done"
+              @cancel="cancel"
+            ></Viewer>
+          </v-col>
+        </v-row>
+      </v-container>
     </v-main>
   </v-app>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
-// import * as Swing from 'swing';
-import { getTasks } from '../wrapper/api';
+import { SearchResponse } from '@notionhq/client/build/src/api-endpoints';
 import Viewer from '@/views/Administration/Viewer.vue';
-import { State } from '@/store';
+import { api } from '@/wrapper/api';
+import {
+  Category, Elements, ICategory, IProject, isCategory, isProject, isTask, Project, Task,
+} from '@/models/project';
 
 export default Vue.extend({
-  name: 'Element',
+  name: 'Random',
 
   components: {
     Viewer,
   },
 
+  computed: {
+    selector(): (IProject | ICategory)[] {
+      // console.log('this.projects', this.projects);
+      // console.log('this.categories', this.categories);
+      return this.projects;
+    },
+    tasksFromProject(): Task[] {
+      const selectedProject = this.currentProject?.map((p) => p.id);
+      return this.tasks
+        .filter((task) => selectedProject?.includes(task.parent))
+        .filter((task) => !this.denyList.includes(task.id));
+    },
+    tasks(): Task[] {
+      return this.elements.filter((e) => isTask(e));
+    },
+    projects(): IProject[] {
+      return this.elements.filter((e) => isProject(e));
+    },
+    categories(): ICategory[] {
+      return this.elements.filter((e) => isCategory(e));
+    },
+  },
+
   data() {
     return {
-      tasks: [] as any[],
-      task: null as any,
-
       doingMode: false,
+      currentProject: null as IProject[] | null,
+      currentTask: null as null | Task,
+
+      elements: [] as Elements[],
+      denyList: [] as string[],
+
+      isTaskLoading: true,
+      isProjectsLoading: true,
     };
   },
 
-  computed: {
-    projects(): State['projects'] {
-      return this.$accessor.projects;
-    },
-    currentProject: {
-      get(): State['currentProject'] {
-        return this.$accessor.currentProject;
-      },
-      set(val: State['currentProject']) {
-        this.$accessor.SET_CURRENT_PROJECT(val);
-      },
-    },
-  },
-
   methods: {
+    setTaskContent(taskId: Task['id'], content: any) {
+      const task = this.tasks.find((t) => t.id === taskId);
+      if (task) {
+        task.content = content;
+      }
+    },
+    async getRandomTask(): Promise<void> {
+      this.isTaskLoading = true;
+      const tasks = this.tasksFromProject;
+      console.log('tasks', tasks);
+
+      const index = Math.floor(Math.random() * tasks.length);
+      console.log('index', index);
+
+      console.log('tasks[index]', tasks[index]);
+
+      const newTask = tasks[index];
+
+      const content = await api.getPageContent(newTask.id);
+
+      this.setTaskContent(newTask.id, content.results);
+
+      this.currentTask = newTask;
+      this.isTaskLoading = false;
+    },
     reject() {
-      //
+      if (this.currentTask) {
+        this.denyList.push(this.currentTask.id);
+        this.getRandomTask();
+      }
     },
     accept() {
       this.doingMode = true;
@@ -88,50 +145,103 @@ export default Vue.extend({
   },
 
   async mounted() {
-    const tasks = await getTasks();
-    this.$accessor.SET_TASKS(tasks);
+    const rawAuth = localStorage.getItem('notion-auth');
 
-    this.tasks = tasks;
-    // eslint-disable-next-line prefer-destructuring
-    this.task = this.tasks[0];
-    console.log('tasks', tasks);
+    if (!rawAuth) {
+      this.$router.push('/login');
+    } else {
+      const auth = JSON.parse(rawAuth);
+      api.setToken(auth.access_token);
 
-    // await this.$nextTick();
+      const data: SearchResponse['results'] = [];
+      let hasMore = true;
+      let nextCursor = '';
 
-    // const refsTasks = Array.isArray(this.$refs.task) ? this.$refs.task : [this.$refs.task];
-    // console.log('refsTasks', refsTasks);
-    // const els = refsTasks.map((task) => {
-    //   if (task) {
-    //     return ((task as Vue).$el ? (task as Vue).$el : task);
-    //   }
-    //   return undefined;
-    // });
-    // console.log('els', els);
-    // console.log('Swing', Swing);
-    // const stack = Swing.Stack();
+      while (hasMore) {
+      // eslint-disable-next-line no-await-in-loop
+        const { has_more, next_cursor, results } = await api.fetchElements(nextCursor);
 
-    // els.forEach((targetElement) => {
-    //   // Add card element to the Stack.
-    //   stack.createCard(targetElement);
-    // });
+        if (has_more && next_cursor) {
+          nextCursor = next_cursor;
+        }
 
-    // // Add event listener for when a card is thrown out of the stack.
-    // stack.on('throwout', (event) => {
-    //   // e.target Reference to the element that has been thrown out of the stack.
-    //   // e.throwDirection Direction in which the element has been thrown
-    //   // (Direction.LEFT, Direction.RIGHT).
+        hasMore = has_more;
 
-    //   console.log('Card has been thrown out of the stack.');
-    //   console.log(`Throw direction:
-    //     ${event.throwDirection === Swing.Direction.LEFT ? 'left' : 'right'}
-    //   `);
-    // });
+        data.push(...results);
+      }
 
-    // // Add event listener for when a card is thrown in the stack, including
-    // // the spring back into place effect.
-    // stack.on('throwin', () => {
-    //   console.log('Card has snapped back to the stack.');
-    // });
+      for await (const element of data) {
+        if (element.object === 'page') {
+          if (element.parent.type === 'workspace') {
+            // Workspaces
+            let cover = '';
+            let text = '';
+
+            if (
+              element.cover?.type === 'external'
+            ) {
+              cover = element.cover.external.url;
+            } else {
+              cover = element.cover?.file.url ?? '';
+            }
+
+            if (element.properties.title.type === 'title') {
+              if (Array.isArray(element.properties.title.title)) {
+                text = element.properties.title.title.map((t) => t.plain_text).join(' ');
+              }
+            }
+
+            this.elements.push(new Category({
+              id: element.id,
+              cover,
+              archived: element.archived,
+              text,
+              parent: '',
+              url: element.url,
+            }));
+          } else {
+            // Tasks
+            this.elements.push(new Task({
+              name: element.properties?.Name?.title?.[0]?.plain_text ?? 'No Title',
+              parent: element.parent.database_id,
+              id: element.id,
+              content: [],
+              archived: element.archived,
+              properties: element.properties,
+              url: element.url,
+            }));
+
+            // console.log('b', element);
+            // console.log('b', element.properties.Name.title[0].plain_text);
+          }
+        } else if (element.object === 'database') {
+          // Projects
+          this.elements.push(new Project({
+            id: element.id,
+            name: element.title[0].plain_text,
+            parent: element.parent.page_id,
+            properties: element.properties,
+            url: element.url,
+          }));
+        }
+      }
+
+      this.currentProject = this.projects;
+
+      this.isProjectsLoading = false;
+
+      await this.getRandomTask();
+    }
   },
 });
 </script>
+
+<style lang="scss" scoped>
+.h100 {
+  height: 100%;
+}
+
+.main {
+  height: 100vh;
+}
+</style>

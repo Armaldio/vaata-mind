@@ -5,7 +5,7 @@
       "reason": ""
     },
     "sass-loader": {
-      "versions": "12.1.0",
+      "versions": "^10",
       "reason": ""
     }
   }

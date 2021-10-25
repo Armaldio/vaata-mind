@@ -1,4 +1,4 @@
-import { GetPageResponse } from '@notionhq/client/build/src/api-endpoints';
+import { GetPageResponse, ListBlockChildrenResponse, SearchResponse } from '@notionhq/client/build/src/api-endpoints';
 import { Task } from '@/models/project';
 
 // eslint-disable-next-line import/prefer-default-export
@@ -47,3 +47,53 @@ export const getTasks = async () => {
     return new Task(myTask);
   });
 };
+
+export class API {
+  token = '';
+
+  constructor(token: string) {
+    this.setToken(token);
+  }
+
+  setToken(token: string) {
+    this.token = token;
+  }
+
+  // ---
+
+  async request<INPUT, OUTPUT>(url: string, body: INPUT, headers: HeadersInit = {}) {
+    const response = await fetch(url, {
+      body: JSON.stringify(body),
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Token: this.token,
+        ...headers,
+      },
+    });
+
+    const json = await response.json();
+
+    return json as OUTPUT;
+  }
+
+  fetchElements(startCursor?: string) {
+    return this.request<any, SearchResponse>('/api/getElements', {
+      startCursor,
+    });
+  }
+
+  findPage(id: string) {
+    return this.request<any, GetPageResponse>('/api/getPage', {
+      pageId: id,
+    });
+  }
+
+  getPageContent(id: string) {
+    return this.request<any, ListBlockChildrenResponse>('/api/getPageContent', {
+      blockId: id,
+    });
+  }
+}
+
+export const api = new API('');

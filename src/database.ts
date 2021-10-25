@@ -35,7 +35,7 @@
 // };
 
 import { openDB, DBSchema } from 'idb';
-import { Note, Project, Task } from './models/project';
+import { Note, IProject, Task } from './models/project';
 
 interface VaataDb extends DBSchema {
   tasks: {
@@ -50,7 +50,7 @@ interface VaataDb extends DBSchema {
 
   projects: {
     key: string;
-    value: Project;
+    value: IProject;
   }
 }
 

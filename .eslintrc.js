@@ -21,8 +21,11 @@ module.exports = {
     'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
 
     indent: 'off',
-    '@typescript-eslint/indent': ['error', 2],
 
+    camelcase: 'off',
+    'no-restricted-syntax': 'off',
+
+    '@typescript-eslint/indent': ['error', 2],
     '@typescript-eslint/ban-ts-comment': 0,
   },
 };
