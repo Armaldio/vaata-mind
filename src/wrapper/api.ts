@@ -38,12 +38,17 @@ export const getTasks = async () => {
     const myTask: Partial<Task> = {};
 
     myTask.id = p.id;
+    // @ts-ignore
     myTask.name = p.properties.Name.title[0].text.content;
+    // @ts-ignore
     myTask.project = p.properties.Project.relation[0].id;
+    // @ts-ignore
     myTask.status = p.properties.Status.select?.id ?? null;
+    // @ts-ignore
     myTask.tags = p.properties.Tags.multi_select.map((tag) => tag.id);
     myTask.content = taskBlocsResult[index].results;
 
+    // @ts-ignore
     return new Task(myTask);
   });
 };

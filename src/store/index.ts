@@ -7,7 +7,7 @@ import {
   mutationTree,
   actionTree,
 } from 'typed-vuex';
-import { Note, IProject, Task } from '@/models/project';
+import { IProject, Task } from '@/models/project';
 import { dataDB } from '@/database';
 
 Vue.use(Vuex);
@@ -15,16 +15,13 @@ Vue.use(Vuex);
 const baseState = () => ({
   drawer: true,
   currentProject: null as IProject | null,
-  currentItem: null as Note | Task | null,
   tasks: [] as Task[],
-  notes: [] as Note[],
   projects: [] as IProject[],
 });
 
 export type State = ReturnType<typeof baseState>;
 
 const getters = getterTree(baseState, {
-  elements: (state) => ([...state.notes, ...state.tasks]),
 });
 
 const mutations = mutationTree(baseState, {
@@ -34,17 +31,11 @@ const mutations = mutationTree(baseState, {
   SET_CURRENT_PROJECT(state, project: IProject | null) {
     state.currentProject = project;
   },
-  SET_CURRENT_ITEM(state, item: Task | Note) {
-    state.currentItem = item;
-  },
   SET_PROJECTS(state, projects: IProject[]) {
     state.projects = projects;
   },
   SET_TASKS(state, tasks: Task[]) {
     state.tasks = tasks;
-  },
-  SET_NOTES(state, notes: Note[]) {
-    state.notes = notes;
   },
 
   PUT_PROJECT(state, project: IProject) {
@@ -71,11 +62,9 @@ const actions = actionTree(
       const db = await dataDB();
       const projects = await db.getAll('projects');
       const tasks = await db.getAll('tasks');
-      const notes = await db.getAll('notes');
 
       commit('SET_PROJECTS', projects);
       commit('SET_TASKS', tasks);
-      commit('SET_NOTES', notes);
     },
     save() {
       // save projects to localstorage
@@ -103,10 +92,6 @@ export const unsubscribe = store.subscribe(async (
 
   state.projects.forEach((project) => {
     db.put('projects', project);
-  });
-
-  state.notes.forEach((note) => {
-    db.put('notes', note);
   });
 
   state.tasks.forEach((task) => {

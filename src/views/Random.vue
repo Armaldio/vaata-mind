@@ -116,6 +116,7 @@ export default Vue.extend({
       this.tasksFromProject.forEach((task) => {
         const propsForTask = task.properties;
         Object.entries(propsForTask).forEach(([key, value]) => {
+          // @ts-ignore
           if (!props[key] && value.type !== 'title') {
             props[key] = {
               name: key,
@@ -134,6 +135,7 @@ export default Vue.extend({
             propForTask.type === 'people'
             && propForTask.people
           ) {
+            // @ts-ignore
             propForTask.people.forEach((person) => {
               if (!props[key].values.find((prop) => prop.id === person.id)) {
                 props[key].values.push(person);
@@ -150,12 +152,15 @@ export default Vue.extend({
       return props;
     },
     tasks(): Task[] {
+      // @ts-ignore
       return this.elements.filter((e) => isTask(e));
     },
     projects(): IProject[] {
+      // @ts-ignore
       return this.elements.filter((e) => isProject(e));
     },
     categories(): ICategory[] {
+      // @ts-ignore
       return this.elements.filter((e) => isCategory(e));
     },
   },
@@ -275,7 +280,9 @@ export default Vue.extend({
           } else {
             // Tasks
             this.elements.push(new Task({
+              // @ts-ignore
               name: element.properties?.Name?.title?.[0]?.plain_text ?? 'No Title',
+              // @ts-ignore
               parent: element.parent.database_id,
               id: element.id,
               content: [],
@@ -292,6 +299,7 @@ export default Vue.extend({
           this.elements.push(new Project({
             id: element.id,
             name: element.title[0].plain_text,
+            // @ts-ignore
             parent: element.parent.page_id,
             properties: element.properties,
             url: element.url,

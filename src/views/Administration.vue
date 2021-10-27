@@ -98,183 +98,184 @@
 </template>
 
 <script lang="ts">
-import { nanoid } from 'nanoid';
-import Vue from 'vue';
-import { GetPageResponse } from '@notionhq/client/build/src/api-endpoints';
-import { Note, Project, Task } from '../models/project';
-import { State } from '../store';
-import { getTasks } from '../wrapper/api';
 
-export default Vue.extend({
-  name: 'App',
+// import { nanoid } from 'nanoid';
+// import Vue from 'vue';
+// import { GetPageResponse } from '@notionhq/client/build/src/api-endpoints';
+// import { Project, Task } from '../models/project';
+// import { State } from '../store';
+// import { getTasks } from '../wrapper/api';
 
-  async created() {
-    // await this.$accessor.load();
-  },
+// export default Vue.extend({
+//   name: 'App',
 
-  async mounted() {
-    // const project = this.$accessor.projects[0];
-    // this.$accessor.SET_CURRENT_PROJECT(project);
+//   async created() {
+//     // await this.$accessor.load();
+//   },
 
-    const projects = (await ((await fetch('/api/getPages', {
-      method: 'POST',
-      body: JSON.stringify({
-        type: 'projects',
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })).json())).results as GetPageResponse[];
+//   async mounted() {
+//     // const project = this.$accessor.projects[0];
+//     // this.$accessor.SET_CURRENT_PROJECT(project);
 
-    const notes = (await ((await fetch('/api/getPages', {
-      method: 'POST',
-      body: JSON.stringify({
-        type: 'notes',
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })).json())).results as GetPageResponse[];
+//     const projects = (await ((await fetch('/api/getPages', {
+//       method: 'POST',
+//       body: JSON.stringify({
+//         type: 'projects',
+//       }),
+//       headers: {
+//         'Content-Type': 'application/json',
+//       },
+//     })).json())).results as GetPageResponse[];
 
-    console.log('projects', projects);
-    console.log('notes', notes);
+//     const notes = (await ((await fetch('/api/getPages', {
+//       method: 'POST',
+//       body: JSON.stringify({
+//         type: 'notes',
+//       }),
+//       headers: {
+//         'Content-Type': 'application/json',
+//       },
+//     })).json())).results as GetPageResponse[];
 
-    const blocksNotes: (() => Promise<any>)[] = [];
+//     console.log('projects', projects);
+//     console.log('notes', notes);
 
-    notes.forEach(async (note) => {
-      blocksNotes.push(async () => {
-        const blocks = (await ((await fetch('/api/getPageDetails', {
-          method: 'POST',
-          body: JSON.stringify({
-            page: note.id,
-          }),
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        })).json()));
+//     const blocksNotes: (() => Promise<any>)[] = [];
 
-        return blocks;
-      });
-    });
+//     notes.forEach(async (note) => {
+//       blocksNotes.push(async () => {
+//         const blocks = (await ((await fetch('/api/getPageDetails', {
+//           method: 'POST',
+//           body: JSON.stringify({
+//             page: note.id,
+//           }),
+//           headers: {
+//             'Content-Type': 'application/json',
+//           },
+//         })).json()));
 
-    const notesBlocsResult = await Promise.all(blocksNotes.map((x) => x()));
+//         return blocks;
+//       });
+//     });
 
-    this.$accessor.SET_PROJECTS(projects.map((p, index) => {
-      const myProject = new Project();
-      myProject.id = p.id;
+//     const notesBlocsResult = await Promise.all(blocksNotes.map((x) => x()));
 
-      const name = p.properties.Name;
-      if (name.type === 'title') {
-        const title = name.title[0];
-        if (title.type === 'text') {
-          myProject.name = title.text.content;
-        }
-      }
-      myProject.description = '';
+//     this.$accessor.SET_PROJECTS(projects.map((p, index) => {
+//       const myProject = new Project();
+//       myProject.id = p.id;
 
-      return myProject;
-    }));
+//       const name = p.properties.Name;
+//       if (name.type === 'title') {
+//         const title = name.title[0];
+//         if (title.type === 'text') {
+//           myProject.name = title.text.content;
+//         }
+//       }
+//       myProject.description = '';
 
-    const tasks = await getTasks();
-    this.$accessor.SET_TASKS(tasks);
+//       return myProject;
+//     }));
 
-    this.$accessor.SET_NOTES(notes.map((p, index) => {
-      const myNotes = new Note();
-      myNotes.id = p.id;
-      myNotes.content = '';
-      myNotes.name = p.properties.Name.title[0].text.content;
-      myNotes.project = p.properties.Project.relation[0].id;
-      myNotes.content = notesBlocsResult[index].results;
+//     const tasks = await getTasks();
+//     this.$accessor.SET_TASKS(tasks);
 
-      return myNotes;
-    }));
+//     this.$accessor.SET_NOTES(notes.map((p, index) => {
+//       const myNotes = new Note();
+//       myNotes.id = p.id;
+//       myNotes.content = '';
+//       myNotes.name = p.properties.Name.title[0].text.content;
+//       myNotes.project = p.properties.Project.relation[0].id;
+//       myNotes.content = notesBlocsResult[index].results;
 
-    this.isLoading = false;
-  },
+//       return myNotes;
+//     }));
 
-  computed: {
-    drawer: {
-      get() {
-        return this.$accessor.drawer;
-      },
-      set(val: boolean) {
-        this.$accessor.SET_DRAWER(val);
-      },
-    },
-    currentProject: {
-      get(): State['currentProject'] {
-        return this.$accessor.currentProject;
-      },
-      set(val: State['currentProject']) {
-        this.$accessor.SET_CURRENT_PROJECT(val);
-      },
-    },
-    projects(): State['projects'] {
-      return this.$accessor.projects;
-    },
-    tasks(): State['tasks'] {
-      const project = this.currentProject;
-      if (!project) {
-        return [];
-      }
+//     this.isLoading = false;
+//   },
 
-      const tasks = this.$accessor.tasks.filter(
-        (task) => task.project === project.id,
-      );
+//   computed: {
+//     drawer: {
+//       get() {
+//         return this.$accessor.drawer;
+//       },
+//       set(val: boolean) {
+//         this.$accessor.SET_DRAWER(val);
+//       },
+//     },
+//     currentProject: {
+//       get(): State['currentProject'] {
+//         return this.$accessor.currentProject;
+//       },
+//       set(val: State['currentProject']) {
+//         this.$accessor.SET_CURRENT_PROJECT(val);
+//       },
+//     },
+//     projects(): State['projects'] {
+//       return this.$accessor.projects;
+//     },
+//     tasks(): State['tasks'] {
+//       const project = this.currentProject;
+//       if (!project) {
+//         return [];
+//       }
 
-      return tasks;
-    },
-    notes(): State['notes'] {
-      const project = this.currentProject;
-      if (!project) {
-        return [];
-      }
+//       const tasks = this.$accessor.tasks.filter(
+//         (task) => task.project === project.id,
+//       );
 
-      const notes = this.$accessor.notes.filter(
-        (note) => note.project === project.id,
-      );
+//       return tasks;
+//     },
+//     notes(): State['notes'] {
+//       const project = this.currentProject;
+//       if (!project) {
+//         return [];
+//       }
 
-      return notes;
-    },
-  },
+//       const notes = this.$accessor.notes.filter(
+//         (note) => note.project === project.id,
+//       );
 
-  methods: {
-    getRouterPath(projectId: string, itemId: string | null = null) {
-      if (itemId) {
-        return `/admin/${projectId}/${itemId}`;
-      }
-      return `/admin/${projectId}`;
-    },
-    getRouterPathCurrentProject(itemId: string | null = null) {
-      if (!this.currentProject) {
-        return '/admin';
-      }
+//       return notes;
+//     },
+//   },
 
-      return this.getRouterPath(this.currentProject.id, itemId);
-    },
-    onProjectSelected(project: Project) {
-      const p = this.getRouterPath(project.id, null);
-      this.$router.replace(p);
-    },
-    selectItem(item: Task | Note) {
-      if (this.currentProject) {
-        const p = this.getRouterPath(this.currentProject.id, item.id);
-        this.$router.replace(p);
-      }
-    },
-    createProject() {
-      this.$accessor.createProject({
-        id: nanoid(),
-        name: 'New project',
-        description: '',
-      });
-    },
-  },
+//   methods: {
+//     getRouterPath(projectId: string, itemId: string | null = null) {
+//       if (itemId) {
+//         return `/admin/${projectId}/${itemId}`;
+//       }
+//       return `/admin/${projectId}`;
+//     },
+//     getRouterPathCurrentProject(itemId: string | null = null) {
+//       if (!this.currentProject) {
+//         return '/admin';
+//       }
 
-  data: () => ({
-    isLoading: true,
-  }),
-});
+//       return this.getRouterPath(this.currentProject.id, itemId);
+//     },
+//     onProjectSelected(project: Project) {
+//       const p = this.getRouterPath(project.id, null);
+//       this.$router.replace(p);
+//     },
+//     selectItem(item: Task | Note) {
+//       if (this.currentProject) {
+//         const p = this.getRouterPath(this.currentProject.id, item.id);
+//         this.$router.replace(p);
+//       }
+//     },
+//     createProject() {
+//       this.$accessor.createProject({
+//         id: nanoid(),
+//         name: 'New project',
+//         description: '',
+//       });
+//     },
+//   },
+
+//   data: () => ({
+//     isLoading: true,
+//   }),
+// });
 </script>
 
 <style>

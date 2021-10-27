@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import VueRouter, { RouteConfig } from 'vue-router';
-import Admin from '../views/Administration.vue';
+// import Admin from '../views/Administration.vue';
 import Random from '../views/Random.vue';
 
 Vue.use(VueRouter);
@@ -11,18 +11,18 @@ const routes: Array<RouteConfig> = [
     name: 'Home',
     component: Random,
   },
-  {
-    path: '/admin',
-    name: 'Administration',
-    component: Admin,
-    children: [
-      {
-        path: ':project/:element?',
-        name: 'Project',
-        component: () => import('../views/Administration/Viewer.vue'),
-      },
-    ],
-  },
+  // {
+  //   path: '/admin',
+  //   name: 'Administration',
+  //   component: Admin,
+  //   children: [
+  //     {
+  //       path: ':project/:element?',
+  //       name: 'Project',
+  //       component: () => import('../views/Administration/Viewer.vue'),
+  //     },
+  //   ],
+  // },
   {
     path: '/login',
     name: 'Login',

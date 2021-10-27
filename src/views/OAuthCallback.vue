@@ -13,6 +13,7 @@ export default {
     };
   },
   async mounted() {
+    // @ts-ignore
     const { code } = this.$route.query;
 
     console.log('code', code);
@@ -34,6 +35,7 @@ export default {
     } else {
       localStorage.setItem('notion-auth', JSON.stringify(auth));
     }
+    // @ts-ignore
     this.isLoading = false;
   },
 };

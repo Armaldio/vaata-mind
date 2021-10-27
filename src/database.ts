@@ -35,17 +35,12 @@
 // };
 
 import { openDB, DBSchema } from 'idb';
-import { Note, IProject, Task } from './models/project';
+import { IProject, Task } from './models/project';
 
 interface VaataDb extends DBSchema {
   tasks: {
     key: string;
     value: Task;
-  }
-
-  notes: {
-    key: string;
-    value: Note;
   }
 
   projects: {
@@ -58,10 +53,6 @@ type Settings = DBSchema
 
 const dataDB = () => openDB<VaataDb>('vaata', 1, {
   upgrade(db) {
-    db.createObjectStore('notes', {
-      keyPath: 'id',
-    });
-
     db.createObjectStore('projects', {
       keyPath: 'id',
     });
