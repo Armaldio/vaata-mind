@@ -38,13 +38,13 @@
     <v-card-actions>
       <v-spacer></v-spacer>
       <template v-if="doingMode">
-        <v-btn @click="done">Terminer</v-btn>
-        <v-btn @click="cancel">Annuler</v-btn>
+        <v-btn outlined @click="done">Terminer</v-btn>
+        <v-btn outlined @click="cancel">Annuler</v-btn>
       </template>
 
       <template v-else>
-        <v-btn @click="reject" color="error">Rejecter</v-btn>
-        <v-btn @click="accept" color="success">Accepter</v-btn>
+        <v-btn outlined @click="reject" color="error">Rejecter</v-btn>
+        <v-btn outlined @click="accept" color="success">Accepter</v-btn>
       </template>
     </v-card-actions>
   </v-card>

@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <v-main class="main">
-      <v-container fill-height>
+      <v-container class="d-flex h100 flex-column">
       <!-- <v-treeview
         selectable
         item-text="text"
@@ -9,12 +9,10 @@
         :items="selector"
       ></v-treeview> -->
 
-        <v-row
-          align="center"
-          class="h100"
-        >
-          <v-col class="h100 d-flex flex-column hide-overflow">
+        <v-row>
+          <v-col>
             <v-autocomplete
+              chips
               dense
               solo
               label="Select a project..."
@@ -26,10 +24,46 @@
               :loading="isProjectsLoading"
               return-object
               hide-details
-              class="mb-4 flex-grow-0"
             >
             </v-autocomplete>
+          </v-col>
+        </v-row>
 
+        <v-row v-if="!isProjectsLoading">
+          <v-col>
+            <v-row>
+              <v-col
+                cols="12"
+                sm="12"
+                md="6"
+                lg="4"
+                v-for="(item, index) in properties" :key="index"
+              >
+                <v-autocomplete
+                  chips
+                  dense
+                  solo
+                  :label="item.name"
+                  :items="item.values"
+                  item-text="name"
+                  item-value="id"
+                  multiple
+                  return-object
+                  hide-details
+                >
+                </v-autocomplete>
+              </v-col>
+            </v-row>
+          </v-col>
+        </v-row>
+        <v-skeleton-loader
+          v-else
+          type="text@3"
+          class="mb-4"
+        ></v-skeleton-loader>
+
+        <v-row class="h100">
+          <v-col class="h100 d-flex flex-column hide-overflow">
             <Viewer
               class="flex-grow-1 h100 hide-overflow"
               :task="currentTask"
@@ -75,6 +109,45 @@ export default Vue.extend({
       return this.tasks
         .filter((task) => selectedProject?.includes(task.parent))
         .filter((task) => !this.denyList.includes(task.id));
+    },
+    properties() {
+      const props: Record<string, { name: string, values: any[] }> = {};
+
+      this.tasksFromProject.forEach((task) => {
+        const propsForTask = task.properties;
+        Object.entries(propsForTask).forEach(([key, value]) => {
+          if (!props[key] && value.type !== 'title') {
+            props[key] = {
+              name: key,
+              values: [],
+            };
+          }
+
+          const propForTask = propsForTask[key];
+          if (
+            propForTask.type === 'select'
+            && propForTask.select
+            && !props[key].values.find((prop) => prop.id === propForTask.select.id)
+          ) {
+            props[key].values.push(propForTask.select);
+          } else if (
+            propForTask.type === 'people'
+            && propForTask.people
+          ) {
+            propForTask.people.forEach((person) => {
+              if (!props[key].values.find((prop) => prop.id === person.id)) {
+                props[key].values.push(person);
+              }
+            });
+          } else if (
+            propForTask.type === 'title'
+          ) {
+            // Do nothing
+          }
+        });
+      });
+
+      return props;
     },
     tasks(): Task[] {
       return this.elements.filter((e) => isTask(e));
@@ -231,6 +304,8 @@ export default Vue.extend({
       this.isProjectsLoading = false;
 
       await this.getRandomTask();
+
+      console.log('this.properties', this.properties);
     }
   },
 });
