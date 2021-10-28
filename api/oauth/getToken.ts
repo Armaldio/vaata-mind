@@ -15,7 +15,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       'Content-Type': 'application/json',
       Authorization: `Basic ${basic}`,
     },
-    body: `{"grant_type":"authorization_code","code":"${code}","redirect_uri":"http://${process.env.VERCEL_URL}/oauth/callback"}`,
+    body: `{"grant_type":"authorization_code","code":"${code}","redirect_uri":"https://${process.env.VERCEL_URL}/oauth/callback"}`,
   };
 
   console.log('options', options);
