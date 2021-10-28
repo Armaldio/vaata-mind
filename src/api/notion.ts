@@ -6,6 +6,8 @@ export const auth = {
   clientSecret: process.env.CLIENT_SECRET,
 };
 
+console.log('auth', auth);
+
 // Initializing a client
 export const createNotion = (req: VercelRequest) => {
   if (req.headers.token && !Array.isArray(req.headers.token)) {

@@ -8,12 +8,10 @@
 
 <script>
 
-import { redirectURL } from '../api/utils';
-
 export default {
   data() {
     return {
-      redirectURL,
+      redirectURL: window.location.origin,
     };
   },
 

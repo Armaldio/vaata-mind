@@ -2,8 +2,6 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import fetch from 'node-fetch';
 import { auth } from '../../src/api/notion';
 
-import { redirectURL } from '../../src/api/utils';
-
 export default async (req: VercelRequest, res: VercelResponse) => {
   const { code } = req.body;
   const url = 'https://api.notion.com/v1/oauth/token';
@@ -11,16 +9,16 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   const basic = Buffer.from(`${auth.clientId}:${auth.clientSecret}`).toString('base64');
   console.log('basic', basic);
 
-  let options;
-
-  options = {
+  const options = {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Basic ${basic}`,
     },
-    body: `{"grant_type":"authorization_code","code":"${code}","redirect_uri":"${redirectURL}/oauth/callback"}`,
+    body: `{"grant_type":"authorization_code","code":"${code}","redirect_uri":"http://${process.env.VERCEL_URL}/oauth/callback"}`,
   };
+
+  console.log('options', options);
 
   try {
     const body = await fetch(url, options);
